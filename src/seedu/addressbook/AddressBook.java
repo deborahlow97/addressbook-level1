@@ -115,6 +115,10 @@ public class AddressBook {
     private static final String COMMAND_LIST_DESC = "Displays all persons as a list with index numbers.";
     private static final String COMMAND_LIST_EXAMPLE = COMMAND_LIST_WORD;
 
+    private static final String COMMAND_SORT_WORD = "sort";
+    private static final String COMMAND_SORT_DESC = "Sorts and displays all persons in alphabetical order.";
+    private static final String COMMAND_SORT_EXAMPLE = COMMAND_SORT_WORD;
+
     private static final String COMMAND_DELETE_WORD = "delete";
     private static final String COMMAND_DELETE_DESC = "Deletes a person identified by the index number used in "
                                                     + "the last find/list call.";
@@ -375,6 +379,8 @@ public class AddressBook {
             return executeFindPersons(commandArgs);
         case COMMAND_LIST_WORD:
             return executeListAllPersonsInAddressBook();
+        case COMMAND_SORT_WORD:
+            return executeSortAllPersonsInAddressBook();
         case COMMAND_DELETE_WORD:
             return executeDeletePerson(commandArgs);
         case COMMAND_CLEAR_WORD:
@@ -450,6 +456,7 @@ public class AddressBook {
      * @return feedback display message for the operation result
      */
     private static String executeFindPersons(String commandArgs) {
+        commandArgs.toLowerCase();
         final Set<String> keywords = extractKeywordsFromFindPersonArgs(commandArgs);
         final ArrayList<String[]> personsFound = getPersonsWithNameContainingAnyKeyword(keywords);
         showToUser(personsFound);
@@ -485,12 +492,55 @@ public class AddressBook {
     private static ArrayList<String[]> getPersonsWithNameContainingAnyKeyword(Collection<String> keywords) {
         final ArrayList<String[]> matchedPersons = new ArrayList<>();
         for (String[] person : getAllPersonsInAddressBook()) {
-            final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person)));
+            final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person).toLowerCase()));
             if (!Collections.disjoint(wordsInName, keywords)) {
                 matchedPersons.add(person);
             }
         }
         return matchedPersons;
+    }
+
+
+    /**
+     * Displays all persons in the address book to the user; in sorted order.
+     *
+     * @return feedback display message for the operation result
+     */
+    private static String executeSortAllPersonsInAddressBook() {
+        ArrayList<String[]> sortedReadyToBeDisplayed = getSortedList();
+        showToUser(sortedReadyToBeDisplayed);
+        return getMessageForPersonsDisplayedSummary(sortedReadyToBeDisplayed);
+    }
+
+    private static ArrayList<String[]> getSortedList() {
+        final ArrayList<String> unsortedList = new ArrayList<>();
+        for(String[] Person : getAllPersonsInAddressBook()) {
+            unsortedList.add((getNameFromPerson(Person)));
+
+        }
+        ArrayList<String> sortedList = new ArrayList<>();
+        sortedList = sortingAnArrayList(unsortedList);
+        final ArrayList<String[]>  sortedListInStringArrayFormat = sortingInStringArrayFormat(sortedList);
+
+        return sortedListInStringArrayFormat;
+    }
+
+    private static ArrayList<String> sortingAnArrayList(ArrayList<String> unsortedList) {
+        Collections.sort(unsortedList, String.CASE_INSENSITIVE_ORDER);
+        return unsortedList;
+    }
+
+    private static ArrayList<String[]> sortingInStringArrayFormat(ArrayList<String> sortedNameList) {
+        final ArrayList<String[]> matchedPersonsSorted = new ArrayList<>();
+
+        for(int size = 0; size < sortedNameList.size(); size++) {
+            for(String[] Person : getAllPersonsInAddressBook()) {
+                if(sortedNameList.get(size).equals(getNameFromPerson(Person))) {
+                    matchedPersonsSorted.add(Person);
+                }
+            }
+        }
+        return matchedPersonsSorted;
     }
 
     /**
@@ -1085,6 +1135,7 @@ public class AddressBook {
         return getUsageInfoForAddCommand() + LS
                 + getUsageInfoForFindCommand() + LS
                 + getUsageInfoForViewCommand() + LS
+                + getUsageInfoForSortCommand() + LS
                 + getUsageInfoForDeleteCommand() + LS
                 + getUsageInfoForClearCommand() + LS
                 + getUsageInfoForExitCommand() + LS
@@ -1103,6 +1154,12 @@ public class AddressBook {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_FIND_WORD, COMMAND_FIND_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_FIND_PARAMETERS) + LS
                 + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_FIND_EXAMPLE) + LS;
+    }
+
+    /** Returns the string for showing 'sort' command usage instruction */
+    private static String getUsageInfoForSortCommand() {
+        return String.format(MESSAGE_COMMAND_HELP, COMMAND_SORT_WORD, COMMAND_SORT_DESC) + LS
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_SORT_EXAMPLE) + LS;
     }
 
     /** Returns the string for showing 'delete' command usage instruction */
